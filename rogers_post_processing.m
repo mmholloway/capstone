@@ -4,7 +4,7 @@
 clear all; close all; clc;
 
 % Added by Miranda
-subdir = 'subdir_70/subdir_1718';
+subdir = 'sbas_24';
 addpath(strcat('C:\Users\mmpho\sent_test\',subdir))
 
 % Info from dem.rsc
@@ -194,7 +194,7 @@ if (~isfolder('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year
     mkdir('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\IG Error Plots');
 end
 
-for i= 1:N % [17 35 44]
+for i= 1:3 % [17 35 44]
     fig = figure('Name',strcat("Alpha value = ",num2str(alpha)));
     tiledlayout(2,2)
     nexttile
@@ -259,8 +259,8 @@ for i= 1:N % [17 35 44]
     %figure
 
     % Save file
-    exportgraphics(fig,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\IG Error Plots\',num2str(alpha),'_',num2str(i),'.png'))
-    close;
+    % exportgraphics(fig,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\IG Error Plots\',num2str(alpha),'_',num2str(i),'.png'))
+    % close;
 end
 
 %% Plot some unwrapped phase distributions for raw images
