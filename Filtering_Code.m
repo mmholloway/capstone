@@ -1,9 +1,10 @@
 %% Set Limits
 % tic
 img = unw_phase.*mask;
-loopnumber = 5;
+loopnumber = 3;
 size_limit = 10;
 minPeakValue = 0;
+pixel_lim = 40;
 % length(img(1,1,:))
 % tic
 % parfor k = 1:51
@@ -52,6 +53,7 @@ loc = zeros(length(imgsbound)*3, 2);
 % graycompsave = zeros(length(imgsbound), length(imgsbound(:,1))); % Holder matrix for the graycomp matrix
 
 for i=1:length(img(1,1,:))
+% for i = 1:2
     disp(i + "/" + length(img(1,1,:)))
 %% Grayscale
 %     peakLocations = zeros(length(imgsbound),3); % The locations of the peaks on the current peak
@@ -178,13 +180,23 @@ for i=1:length(img(1,1,:))
     
         % noise removal from boundaries
         for loop = 1:loopnumber
-            for x = 2:length(grayscale)-1
-                for y = 2:length(grayscale(1,:))-1
+            for x = 3:length(grayscale)-2
+                for y = 3:length(grayscale(1,:))-2
                     if (y>2 && y<length(imgsbound)-1 && x>2 && x<length(imgsbound(:,1))-1)
-                        if (boundaries(x,y+1) == 255 && boundaries(x,y-1) == 255 || boundaries(x-1,y) == 255 && boundaries(x+1,y) == 255 ||...
-                            boundaries(x,y+2) == 255 && boundaries(x,y-2) == 255 || boundaries(x-2,y) == 255 && boundaries(x+2,y) == 255 ||...
-                            boundaries(x+1,y+1) == 255 && boundaries(x-1,y-1) == 255 || boundaries(x-1,y+1) == 255 && boundaries(x+1,y-1) == 255)
+%                         if (boundaries(x,y+1) == 255 && boundaries(x,y-1) == 255 || boundaries(x-1,y) == 255 && boundaries(x+1,y) == 255 ||...
+%                             boundaries(x,y+2) == 255 && boundaries(x,y-2) == 255 || boundaries(x-2,y) == 255 && boundaries(x+2,y) == 255 ||...
+%                             boundaries(x+1,y+1) == 255 && boundaries(x-1,y-1) == 255 || boundaries(x-1,y+1) == 255 && boundaries(x+1,y-1) == 255)
+%                                 boundaries(x,y) = 255;
+%                         end
+                        if (boundaries(x,y+1)>pixel_lim && boundaries(x,y-1)>pixel_lim || boundaries(x-1,y)>pixel_lim && boundaries(x+1,y)>pixel_lim ||...
+                            boundaries(x,y+2)>pixel_lim && boundaries(x,y-2)>pixel_lim || boundaries(x-2,y)>pixel_lim && boundaries(x+2,y)>pixel_lim ||...
+                            boundaries(x+1,y+1)>pixel_lim && boundaries(x-1,y-1)>pixel_lim || boundaries(x-1,y+1)>pixel_lim && boundaries(x+1,y-1)>pixel_lim)
                                 boundaries(x,y) = 255;
+                        end 
+                        if (boundaries(x,y+1)<pixel_lim && boundaries(x,y-1)<pixel_lim || boundaries(x-1,y)<pixel_lim && boundaries(x+1,y)<pixel_lim ||...
+                            boundaries(x,y+2)<pixel_lim && boundaries(x,y-2)<pixel_lim || boundaries(x-2,y)<pixel_lim && boundaries(x+2,y)<pixel_lim ||...
+                            boundaries(x+1,y+1)<pixel_lim && boundaries(x-1,y-1)<pixel_lim || boundaries(x-1,y+1)<pixel_lim && boundaries(x+1,y-1)<pixel_lim)
+                                boundaries(x,y) = 0;
                         end
                     end
                 end
@@ -251,7 +263,7 @@ for i=1:length(img(1,1,:))
 %             end
 %         end
 %     end
-
+noise(:,:,i) = img(:,:,i)-double(imcomplement(boundaries));
 %% Call Find_Peaks
 %     tic
 %     [peaks(:,:), loc(:,:), Num_Peaks, peakLocMatrix] = Find_Peaks(imcomplement(graycomp), 10, size_limit, minPeakValue);
@@ -343,6 +355,15 @@ for i=1:length(img(1,1,:))
 %     boundariesAll(:,:,i) = boundaries(:,:);
 end
 %% Figures
+figure
+imshow(transpose(boundaries))
+title("Filtered")
+figure
+imshow(transpose(noise(:,:,2)))
+title("noise")
+figure
+imshow(transpose(img(:,:,2)))
+title("img")
 %     figure
 %     imshow(uint8(grayscale))
 %     title("Yay")
@@ -356,20 +377,3 @@ end
 %     title("Boundaries")
 %     figure
 %     imshow(imgs)
-
-%% Functions
-% function array_changed = filter_through_x(img,k)
-%     parfor i = 1:length(img)
-%         img_changed(i,:,k) = filter_through_y(img,k,i)
-%     end
-%     disp(size(img_changed))
-% end
-% 
-% function array_changed = filter_through_y(img,k,i)
-%     parfor j = 1:length(img(1,:,1))
-%         if isnan(img(i,j,k))
-%             img(i,j,k) = 0;
-%         end
-%     end
-%     array_changed = img(i,:,k);
-% end
