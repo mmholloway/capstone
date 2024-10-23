@@ -1,3 +1,4 @@
+close all
 %% Set Limits
 % tic
 img = unw_phase.*mask;
@@ -263,97 +264,8 @@ for i=1:length(img(1,1,:))
 %             end
 %         end
 %     end
-noise(:,:,i) = img(:,:,i)-double(imcomplement(boundaries));
-%% Call Find_Peaks
-%     tic
-%     [peaks(:,:), loc(:,:), Num_Peaks, peakLocMatrix] = Find_Peaks(imcomplement(graycomp), 10, size_limit, minPeakValue);
-%     toc
-%     % create a holder location list that also holds the number of peaks
-%     for x = 1:Num_Peaks 
-%         for y = 1:2 
-%             peakLocations(x,y)=loc(x,y);
-%         end
-%         peakLocations(x,3) = Num_Peaks;
-%     end
-%     for list=1:Num_Peaks
-%         peaksave(loc(list,1),loc(list,2)) = 255;
-%     end
-%     
-%     for q=1:5
-%         for x = 3:length(peaks)-3
-%             for y = 3:length(peaks(:,1))-3
-%                 if peaksave(x,y) == 255 || peaksave(x+1,y) == 255 && graycomp(x,y) <=grayscaleMin || peaksave(x-1,y) == 255 && graycomp(x,y) <=grayscaleMin ||...
-%                    peaksave(x,y+1) == 255 && graycomp(x,y) <=grayscaleMin || peaksave(x,y-1) == 255 && graycomp(x,y) <=grayscaleMin || peaksave(x+2,y) == 255 && graycomp(x,y) <=grayscaleMin ||...
-%                    peaksave(x-2,y) == 255 && graycomp(x,y) <=grayscaleMin || peaksave(x,y+2) == 255 && graycomp(x,y) <=grayscaleMin || peaksave(x,y-2) == 255 && graycomp(x,y) <=grayscaleMin
-%                     peaksave1(x,y) = 255;
-%                 end
-%             end
-%         end
-%         peaksave = peaksave1;
-%     end
-    
-%% Expand Out
-%     while change==1 % while there is a pixel added to the size of a condensate
-%         changeflag = 0; % Flag to show if there has been a change in condensate size
-%         q=q+1; % Counter only for timing
-%         disp(q)
-% %         % Expand out the peak to fill the area as shown in Graycompsave, this
-% %         % is done by adding the two nearest pixels in the four cardinal
-% %         % directions to each condensate and repeating the process until no
-% %         % pixels are added
-%         for x = 3:length(peaks)-3
-%             for y = 3:length(peaks(:,1))-3
-%                 for z = 1:lastIMG
-%                     if peaksave(x,y)>0
-%                         withCellCountSave(x,y) = peaksave(x,y);
-%                     elseif peaksave(x+1,y)>0 && graycomp(x,y)<255
-%                         withCellCountSave(x,y) = peaksave(x+1,y);
-%                         changeflag = 1; % A flag showing that a pixel was added
-%                         changecount = changecount+1;
-%                     elseif peaksave(x+2,y)>0 && graycomp(x,y)<255  
-%                         withCellCountSave(x,y) = peaksave(x+2,y);
-%                         changeflag = 1;
-%                         changecount = changecount+1;
-%                     elseif peaksave(x,y+1)>0 && graycomp(x,y)<255  
-%                         withCellCountSave(x,y) = peaksave(x,y+1);
-%                         changeflag = 1;
-%                         changecount = changecount+1;
-%                     elseif peaksave(x,y+2)>0 && graycomp(x,y)<255 
-%                         withCellCountSave(x,y) = peaksave(x,y+2);
-%                         changeflag = 1;
-%                         changecount = changecount+1;
-%                     elseif peaksave(x-1,y)>0 && graycomp(x,y)<255   
-%                         withCellCountSave(x,y) = peaksave(x-1,y);
-%                         changeflag = 1;
-%                         changecount = changecount+1;
-%                     elseif peaksave(x-2,y)>0 && graycomp(x,y)<255   
-%                         withCellCountSave(x,y) = peaksave(x-2,y);
-%                         changeflag = 1;
-%                         changecount = changecount+1;
-%                     elseif peaksave(x,y-1)>0 && graycomp(x,y)<255   
-%                         withCellCountSave(x,y) = peaksave(x,y-1);
-%                         changeflag = 1;
-%                         changecount = changecount+1;
-%                     elseif peaksave(x,y-2)>0 && graycomp(x,y)<255   
-%                         withCellCountSave(x,y) = peaksave(x,y-2);
-%                         changeflag = 1;
-%                         changecount = changecount+1;
-%                     end
-%                 end
-%             end
-%         end
-%         peaksave = withCellCountSave;
-%         if ~changeflag
-%             change = 0;
-%         else
-%             change = 1;
-%         end
-%     end
-% %% Full Matricies
-%     peaksaveAll(:,:,i) = peaksave(:,:);
-%     graycompAll(:,:,i) = graycomp(:,:);
-%     boundariesAll(:,:,i) = boundaries(:,:);
-end
+noise(:,:,i) = img(:,:,i)*double(imcomplement(boundaries))/255;
+
 %% Figures
 figure
 imshow(transpose(boundaries))
@@ -377,3 +289,20 @@ title("img")
 %     title("Boundaries")
 %     figure
 %     imshow(imgs)
+
+%% Functions
+% function array_changed = filter_through_x(img,k)
+%     parfor i = 1:length(img)
+%         img_changed(i,:,k) = filter_through_y(img,k,i)
+%     end
+%     disp(size(img_changed))
+% end
+% 
+% function array_changed = filter_through_y(img,k,i)
+%     parfor j = 1:length(img(1,:,1))
+%         if isnan(img(i,j,k))
+%             img(i,j,k) = 0;
+%         end
+%     end
+%     array_changed = img(i,:,k);
+% end
