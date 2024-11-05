@@ -191,6 +191,26 @@ imshow((single_noisy_land.*255).');
 title("Isolated Noisy Land Pixels")
 set(gca,'FontSize',16)
 
+figure;
+tiledlayout(2,2)
+
+nexttile
+imshow(img(:,:,1))
+title("Interferogram #1")
+
+nexttile
+imshow(denoise_test.');
+title("Interferogram #1 After wdenoise2()")
+set(gca,'FontSize',16)
+
+nexttile
+imshow((single_noisy_land.*255).');
+title("Isolated Noisy Land Pixels")
+set(gca,'FontSize',16)
+
+nexttile
+imshow(denoise_land.');
+title("Interferogram #1 Land Only After wdenoise2()")
 
 %% Check values in denoised img vs original img
 
