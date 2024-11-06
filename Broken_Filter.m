@@ -2,11 +2,8 @@ close all
 %% Set Limits
 % tic
 img = unw_phase.*mask;
-loopnumber = 6;
-size_limit = 10;
-minPeakValue = 0;
-pixel_lim_max = 40;
-pixel_lim_min = 20;
+loopnumber = 5;
+plus_minus = 2;
 % length(img(1,1,:))
 % tic
 % parfor k = 1:51
@@ -52,8 +49,8 @@ for i=1:length(img(1,1,:))
 %% Grayscale
 %     peakLocations = zeros(length(imgsbound),3); % The locations of the peaks on the current peak
         peaksave = zeros(length(imgsbound), length(imgsbound(:,1))); % 
-        peaksave1 = zeros(length(imgsbound), length(imgsbound(:,1))); % A holder variable for peaksave
-
+        peaksave1 = zeros(length(imgsbound), length(imgsbound(1,:))); % A holder variable for peaksave
+        boundaries_save = ones(length(imgsbound),length(imgsbound(1,:,1)))*255;
         imgs = img(:,:,i); % The specific image being analized 
         grayscale = imgs;
         graycomp = imcomplement(grayscale); % flip the grayscale bright to dark
@@ -70,8 +67,8 @@ for i=1:length(img(1,1,:))
 %         figure
 %         plot(pixel_values)
         pixel_lim = find(pixel_values == max(pixel_values));
-        pixel_lim_min = pixel_lim-5;
-        pixel_lim_max = pixel_lim+5;
+        pixel_lim_min = pixel_lim-plus_minus;
+        pixel_lim_max = pixel_lim+plus_minus;
 
         % The First and Last rows and columns removed from the boundaries and
         % calculations (would be removed later)
@@ -96,39 +93,53 @@ for i=1:length(img(1,1,:))
 %                 end
 %             end
 %         end
-    
+        
         % noise removal from boundaries
         for loop = 1:loopnumber
             for x = 3:length(grayscale)-2
                 for y = 3:length(grayscale(1,:))-2
-                    if (boundaries(x,y+1)<pixel_lim_min && boundaries(x,y-1)<pixel_lim_min || boundaries(x-1,y)<pixel_lim_min && boundaries(x+1,y)<pixel_lim_min ||...
-                            boundaries(x,y+2)<pixel_lim_min && boundaries(x,y-2)<pixel_lim_min || boundaries(x-2,y)<pixel_lim_min && boundaries(x+2,y)<pixel_lim_min ||...
-                            boundaries(x+1,y+1)<pixel_lim_min && boundaries(x-1,y-1)<pixel_lim_min || boundaries(x-1,y+1)<pixel_lim_min && boundaries(x+1,y-1)<pixel_lim_min)
-                                boundaries(x,y) = 255;
-                    elseif (y>2 && y<length(imgsbound)-1 && x>2 && x<length(imgsbound(:,1))-1)
-                        if (boundaries(x,y+1)<pixel_lim_max && boundaries(x,y-1)<pixel_lim_max || boundaries(x-1,y)<pixel_lim_max && boundaries(x+1,y)<pixel_lim_max ||...
-                            boundaries(x,y+2)<pixel_lim_max && boundaries(x,y-2)<pixel_lim_max || boundaries(x-2,y)<pixel_lim_max && boundaries(x+2,y)<pixel_lim_max ||...
-                            boundaries(x+1,y+1)<pixel_lim_max && boundaries(x-1,y-1)<pixel_lim_max || boundaries(x-1,y+1)<pixel_lim_max && boundaries(x+1,y-1)<pixel_lim_max)
-                                boundaries(x,y) = 0;
+                    if (y>2 && y<length(imgsbound)-1 && x>2 && x<length(imgsbound(:,1))-1)
+%                         if boundaries(x,y)>pixel_lim_max || boundaries(x,y)<pixel_lim_min
+%                             boundaries_save(x,y)=255;
+%                         else
+%                             boundaries_save(x,y) = pixel_lim;
+%     %                         disp("hi")
+%                         end
+%                         boundaries = boundaries_save;
+
+                        if (boundaries(x,y+1)<pixel_lim_min && boundaries(x,y-1)<pixel_lim_min || boundaries(x-1,y)<pixel_lim_min && boundaries(x+1,y)<pixel_lim_min ||...
+                                boundaries(x,y+2)<pixel_lim_min && boundaries(x,y-2)<pixel_lim_min || boundaries(x-2,y)<pixel_lim_min && boundaries(x+2,y)<pixel_lim_min ||...
+                                boundaries(x+1,y+1)<pixel_lim_min && boundaries(x-1,y-1)<pixel_lim_min || boundaries(x-1,y+1)<pixel_lim_min && boundaries(x+1,y-1)<pixel_lim_min)
+                                    boundaries_save(x,y) = 255;
+                        
+                        elseif (boundaries(x,y+1)<=pixel_lim_max && boundaries(x,y-1)<=pixel_lim_max || boundaries(x-1,y)<=pixel_lim_max && boundaries(x+1,y)<=pixel_lim_max ||...
+                                boundaries(x,y+2)<=pixel_lim_max && boundaries(x,y-2)<=pixel_lim_max || boundaries(x-2,y)<=pixel_lim_max && boundaries(x+2,y)<=pixel_lim_max ||...
+                                boundaries(x+1,y+1)<=pixel_lim_max && boundaries(x-1,y-1)<=pixel_lim_max || boundaries(x-1,y+1)<=pixel_lim_max && boundaries(x+1,y-1)<=pixel_lim_max)
+                                    boundaries_save(x,y) = pixel_lim;
+%                                     disp(x + "," + y)
+                        else
+                            boundaries_save(x,y) = 255;
                         end
                     end
                 end
             end
+            
+            boundaries = uint8(boundaries_save);
         end
     
         % If the pixel is outside the cell boundaries set the value to 255
         % (remove from calculations)
         for x=1:length(grayscale)
             for y=1:length(grayscale(1,:))
-                if boundaries(x,y)==0
-                    graycomp(x,y)=graycomp(x,y);
+                if boundaries(x,y)==pixel_lim
+                    graycomp(x,y)=1;
                 else
-                    graycomp(x,y)=255;
+                    graycomp(x,y)=0;
                 end
             end
         end
-      
-noise(:,:,i) = img(:,:,i).*double(imcomplement(boundaries))/255;
+
+noise(:,:,i) = abs(img(:,:,i)-double(boundaries)).*graycomp;
 end
 %% Figures
 figure
