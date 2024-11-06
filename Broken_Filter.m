@@ -140,6 +140,15 @@ for i=1:length(img(1,1,:))
         end
 
 noise(:,:,i) = abs(img(:,:,i)-double(boundaries)).*graycomp;
+    for x = 1:length(noise)
+        for y = 1:length(noise(1,:,1))
+            if noise(x,y,i) == pixel_lim
+                noise(x,y,i) = 1;
+            else
+                noise(x,y,i) = 0;
+            end
+        end
+    end
 end
 %% Figures
 figure
