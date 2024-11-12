@@ -4,7 +4,11 @@
 
 
 %% Load all of the InSAR files you are considering
-clear all; close all; clc;
+clear all; clc; % close all;
+
+% Added by Miranda
+subdir = 'sbas_24';
+addpath(strcat('C:\Users\mmpho\sent_test\',subdir))
 
 nr=1890; naz=1016;% image size:  nr = # of x (range) pixels; 
                              % naz = # of y (azimuth) pixels

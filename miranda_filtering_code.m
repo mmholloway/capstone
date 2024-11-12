@@ -130,42 +130,50 @@ set(gca,'FontSize',16)
 denoise_land = zeros(size(img));
 noisy_land = zeros(size(img));
 boundaries_logical = imcomplement(boundaries)./255; % land = 1, water = 0
+den_coeffs = [];
+orig_coeffs = [];
+ss = [];
+shifts = [];
 
 for i = 1:N
     disp(strcat(num2str(i), "/", num2str(N)))
-    orig_denoise = wdenoise2(img(:,:,i));
+    [orig_denoise,den_coeff,orig_coeff,s,shift] = wdenoise2(img(:,:,i));
+    den_coeffs = [den_coeffs; den_coeff];
+    orig_coeffs = [orig_coeffs; orig_coeff];
+    ss = [ss; s];
+    shifts = [shifts; shift];
 
-    fig1 = figure;
-    axis on;
-    imshow(orig_denoise.');
-    title(strcat("Interferogram #", num2str(i), " After wdenoise2()"))
-    set(gca,'FontSize',16)
+    % fig1 = figure;
+    % axis on;
+    % imshow(orig_denoise.');
+    % title(strcat("Interferogram #", num2str(i), " After wdenoise2()"))
+    % set(gca,'FontSize',16)
 
     single_denoise_land = orig_denoise.*double(boundaries_logical);
 
-    figure;
-    imshow(single_denoise_land.');
-    title(strcat("Interferogram #", num2str(i), " Land Only After wdenoise2()"))
-    set(gca,'FontSize',16)
-    exportgraphics(fig1,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\denoised_',num2str(i),'.png'))
+    % figure;
+    % imshow(single_denoise_land.');
+    % title(strcat("Interferogram #", num2str(i), " Land Only After wdenoise2()"))
+    % set(gca,'FontSize',16)
+    % exportgraphics(fig1,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\denoised_',num2str(i),'.png'))
 
     single_noisy_land = zeros(size(single_denoise_land,1),size(single_denoise_land,2));
     single_noisy_land((single_denoise_land < mean(single_denoise_land,"all")-(std(single_denoise_land,1,"all")/2)) & (boundaries_logical == 1)) = 1;
 
-    fig2 = figure;
-    imshow((single_noisy_land.*255).');
-    title("Isolated Noisy Land Pixels")
-    set(gca,'FontSize',16)
-    exportgraphics(fig2,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\noisy_land_',num2str(i),'.png'))
-
-    denoise_land(:,:,i) = single_denoise_land;
-    noisy_land(:,:,i) = single_noisy_land;
-    close all;
+    % fig2 = figure;
+    % imshow((single_noisy_land.*255).');
+    % title("Isolated Noisy Land Pixels")
+    % set(gca,'FontSize',16)
+    % exportgraphics(fig2,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\noisy_land_',num2str(i),'.png'))
+    % 
+    % denoise_land(:,:,i) = single_denoise_land;
+    % noisy_land(:,:,i) = single_noisy_land;
+    % close all;
 end
 
 %% Original code (only for igram #1)
 
-denoise_test = wdenoise2(img(:,:,1));
+[denoise_test,igram1_denoised_coeffs,igram1_org_coeffs,s,shifts] = wdenoise2(img(:,:,1));
 
 figure;
 axis on;
@@ -195,8 +203,9 @@ figure;
 tiledlayout(2,2)
 
 nexttile
-imshow(img(:,:,1))
+imshow(img(:,:,1).')
 title("Interferogram #1")
+set(gca,'FontSize',16)
 
 nexttile
 imshow(denoise_test.');
@@ -211,19 +220,62 @@ set(gca,'FontSize',16)
 nexttile
 imshow(denoise_land.');
 title("Interferogram #1 Land Only After wdenoise2()")
+set(gca,'FontSize',16)
 
-%% Check values in denoised img vs original img
+%% Looking at wavelet coefficients
 
-% Only look for land pixels that aren't the same value
-[diff_row, diff_col] = find((denoise_land ~= im1) & (denoise_land ~= 0));
+% same_coeffs = igram1_denoised_coeffs == igram1_org_coeffs;
+% disp(sum(same_coeffs))
 
-figure
-histogram(diff_row)
-title("Rows")
+% same_idx = find(same_coeffs);
+% idx_jumps = diff(same_idx);
+% jumps_loc = find(idx_jumps > 1);
+% jumps_loc = [jumps_loc; find(idx_jumps > 10), zeros(1,length(jumps_loc) - length(find(idx_jumps > 10)))];
+
+% figure;
+% hold on
+% histogram(jumps_loc(1,:))
+% histogram(jumps_loc(2,:))
+% legend("> 1", "> 10")
+% 
+% figure;
+% plot(igram1_denoised_coeffs)
+
+% figure;
+% noise_pixels = single_noisy_land.*img(:,:,1);
+% flat_snl = reshape(noise_pixels,1,[]);
+% plot(fft(flat_snl))
+
+good_den_coeffs = den_coeffs(19,:);
+bad_den_coeffs = den_coeffs(49,:);
+
+good_orig_coeffs = orig_coeffs(19,:);
+bad_den_coeffs = orig_coeffs(49,:);
 
 figure;
-histogram(diff_col)
-title("Cols")
+tiledlayout(1,2)
+
+nexttile
+hold on;
+plot(good_den_coeffs)
+plot(bad_den_coeffs)
+title("Denoised Coefficient Comparison");
+legend("IG #19", "IG #49")
+xlabel("Coefficient Number")
+ylabel("Coefficient Value")
+set(gca,'FontSize',16)
+axis tight
+
+nexttile
+hold on;
+plot(good_den_coeffs)
+plot(bad_den_coeffs)
+title("Original Coefficient Comparison");
+legend("IG #19", "IG #49")
+xlabel("Coefficient Number")
+ylabel("Coefficient Value")
+set(gca,'FontSize',16)
+axis tight
 
 %% Scrap Code area
 %
@@ -277,3 +329,21 @@ title("Cols")
 % addpath('C:\Users\mmpho\radar-lab\sp24')
 % subdir = 'sbas_24';
 % addpath(strcat('C:\Users\mmpho\sent_test\',subdir))
+%
+% net = denoisingNetwork("DnCNN");
+% denoisedI = denoiseImage(img(:,:,1),net);
+% 
+% figure;
+% imshow(denoisedI);
+%
+%[diff_row, diff_col] = find((denoise_land ~= im1) & (denoise_land ~= 0));
+% 
+% figure
+% histogram(diff_row)
+% title("Rows")
+% 
+% figure;
+% histogram(diff_col)
+% title("Cols")
+
+
