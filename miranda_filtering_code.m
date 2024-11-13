@@ -165,9 +165,9 @@ for i = 1:N
     % title("Isolated Noisy Land Pixels")
     % set(gca,'FontSize',16)
     % exportgraphics(fig2,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\noisy_land_',num2str(i),'.png'))
-    % 
-    % denoise_land(:,:,i) = single_denoise_land;
-    % noisy_land(:,:,i) = single_noisy_land;
+    %
+    denoise_land(:,:,i) = single_denoise_land;
+    noisy_land(:,:,i) = single_noisy_land;
     % close all;
 end
 
@@ -237,7 +237,7 @@ set(gca,'FontSize',16)
 % histogram(jumps_loc(1,:))
 % histogram(jumps_loc(2,:))
 % legend("> 1", "> 10")
-% 
+%
 % figure;
 % plot(igram1_denoised_coeffs)
 
@@ -276,6 +276,60 @@ xlabel("Coefficient Number")
 ylabel("Coefficient Value")
 set(gca,'FontSize',16)
 axis tight
+
+%% Calculate Contrast-to-Noise ratio (CNR)
+% https://en.wikipedia.org/wiki/Contrast-to-noise_ratio
+% Calculate per the information here: https://link.springer.com/content/pdf/10.1007/978-0-387-73507-8_7.pdf
+% Let signal intensity be the average of the denoised land image, masked by
+% the boundaries matrix
+% Let the noise intensity be the average of the isolated noise pixels
+% Then, the CNR is these two averages divided by the standard deviation of
+% the image as calculated in the second link
+
+cnr = zeros(1,size(unw_phase,3));
+
+for i = 1:N
+    s_land = mean(nonzeros(denoise_land(:,:,i).*double(boundaries)),"all");
+    s_noise = mean(nonzeros(noisy_land(:,:,i).*unw_phase(:,:,i)),"all");
+
+    stdev_land = std(denoise_land(:,:,i).*double(boundaries),0,"all");
+    stdev_noise = std(noisy_land(:,:,i).*unw_phase(:,:,i),0,"all");
+    stdev = (1/2)*sqrt(var(denoise_land(:,:,i).*double(boundaries),0,"all")+var(noisy_land(:,:,i).*unw_phase(:,:,i),0,"all"));
+
+    cnr(i) = (s_land-s_noise)/stdev_noise;
+end
+
+good_resp = [1, 5, 7, 15:17, 18, 19, 21, 23, 24, 27:30, 32:34, 41, 43, ...
+    44, 47, 48, 50, 51];
+bad_resp = [2:4, 6, 8:14, 20, 22, 25, 26, 31, 35:40, 42, 45, 46, 49];
+
+for i = 1:length(good_resp)
+    disp(strcat("GOOD interferogram idx = ", num2str(good_resp(i)), ...
+        " CNR = ", num2str(cnr(good_resp(i)))))
+end
+
+for i = 1:length(bad_resp)
+    disp(strcat("BAD interferogram idx = ", num2str(bad_resp(i)), ...
+        " CNR = ", num2str(cnr(bad_resp(i)))))
+end
+
+figure;
+tiledlayout(1,2)
+
+nexttile
+boxplot(cnr(good_resp))
+title("CNR of Interferograms Responding Well to wdenoise2()")
+xlabel("Good Interferograms")
+ylabel("CNR Value")
+set(gca,'FontSize',16)
+
+nexttile
+boxplot(cnr(bad_resp))
+title("CNR of Interferograms Responding Poorly to wdenoise2()")
+xlabel("Bad Interferograms")
+ylabel("CNR Value")
+set(gca,'FontSize',16)
+
 
 %% Scrap Code area
 %
@@ -332,16 +386,16 @@ axis tight
 %
 % net = denoisingNetwork("DnCNN");
 % denoisedI = denoiseImage(img(:,:,1),net);
-% 
+%
 % figure;
 % imshow(denoisedI);
 %
 %[diff_row, diff_col] = find((denoise_land ~= im1) & (denoise_land ~= 0));
-% 
+%
 % figure
 % histogram(diff_row)
 % title("Rows")
-% 
+%
 % figure;
 % histogram(diff_col)
 % title("Cols")

@@ -187,3 +187,44 @@ end
 for j=1:255
     img_noise_values(j) = sum(sum(img_noise(:,:,12) == j));
 end
+
+%% Miranda - calculating CNR of values
+
+% Plot and save all interferograms, both the denoised image and the noise
+% in the image
+
+for i = 1:N
+    fig1 = figure;
+    imshow((unw_phase(:,:,i).*double(boundaries)./255).');
+    title(strcat("Filtering_Code.m Denoised Interferogram #",num2str(i)))
+    set(gca,'FontSize',16)
+    exportgraphics(fig1,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\Schuster\denoised_',num2str(i),'.png'))
+
+    fig2 = figure;
+    imshow((unw_phase(:,:,i).*noise(:,:,i)).');
+    title("Isolated Noisy Land Pixels", strcat("Interferogram #",num2str(i)))
+    set(gca,'FontSize',16)
+    exportgraphics(fig2,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\Schuster\noisy_land_',num2str(i),'.png'))
+    
+    close all
+end
+
+%%
+cnr = zeros(1,size(unw_phase,3));
+
+for i = 1:N
+    s_land = mean(nonzeros(unw_phase(:,:,i).*double(boundaries)),"all");
+    s_noise = mean(nonzeros(noise(:,:,i).*double(boundaries)),"all");
+
+    stdev_land = std(unw_phase(:,:,i).*double(boundaries),0,"all");
+    stdev_noise = std(noise(:,:,i).*double(boundaries),0,"all");
+    stdev = (1/2)*sqrt(var(unw_phase(:,:,i).*double(boundaries),0,"all")+var(noise(:,:,i).*double(boundaries),0,"all"));
+
+    cnr(i) = (s_land-s_noise)/stdev_noise;
+end
+
+disp(strcat("CNR of entire dataset is ", num2str(mean(cnr,"all"))))
+
+figure;
+histogram(cnr)
+
