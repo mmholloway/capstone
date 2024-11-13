@@ -226,5 +226,10 @@ end
 disp(strcat("CNR of entire dataset is ", num2str(mean(cnr,"all"))))
 
 figure;
-histogram(cnr)
+boxplot(cnr)
+title("CNR of Filtering Code Interferograms")
+xlabel("Filtering Code Interferograms")
+ylabel("CNR Value")
+set(gca,'FontSize',16)
+
 
