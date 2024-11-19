@@ -138,37 +138,37 @@ shifts = [];
 for i = 1:N
     disp(strcat(num2str(i), "/", num2str(N)))
     [orig_denoise,den_coeff,orig_coeff,s,shift] = wdenoise2(img(:,:,i));
-    den_coeffs = [den_coeffs; den_coeff];
-    orig_coeffs = [orig_coeffs; orig_coeff];
-    ss = [ss; s];
-    shifts = [shifts; shift];
+    % den_coeffs = [den_coeffs; den_coeff];
+    % orig_coeffs = [orig_coeffs; orig_coeff];
+    % ss = [ss; s];
+    % shifts = [shifts; shift];
 
-    % fig1 = figure;
-    % axis on;
-    % imshow(orig_denoise.');
-    % title(strcat("Interferogram #", num2str(i), " After wdenoise2()"))
-    % set(gca,'FontSize',16)
+    fig1 = figure;
+    axis on;
+    imshow(orig_denoise.');
+    title(strcat("Interferogram #", num2str(i), " After wdenoise2()"))
+    set(gca,'FontSize',16)
 
     single_denoise_land = orig_denoise.*double(boundaries_logical);
 
-    % figure;
-    % imshow(single_denoise_land.');
-    % title(strcat("Interferogram #", num2str(i), " Land Only After wdenoise2()"))
-    % set(gca,'FontSize',16)
-    % exportgraphics(fig1,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\denoised_',num2str(i),'.png'))
+    figure;
+    imshow(single_denoise_land.');
+    title(strcat("Interferogram #", num2str(i), " Land Only After wdenoise2()"))
+    set(gca,'FontSize',16)
+    exportgraphics(fig1,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\denoised_',num2str(i),'.png'))
 
     single_noisy_land = zeros(size(single_denoise_land,1),size(single_denoise_land,2));
     single_noisy_land((single_denoise_land < mean(single_denoise_land,"all")-(std(single_denoise_land,1,"all")/2)) & (boundaries_logical == 1)) = 1;
 
-    % fig2 = figure;
-    % imshow((single_noisy_land.*255).');
-    % title("Isolated Noisy Land Pixels")
-    % set(gca,'FontSize',16)
-    % exportgraphics(fig2,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\noisy_land_',num2str(i),'.png'))
-    %
+    fig2 = figure;
+    imshow((single_noisy_land.*255).');
+    title("Isolated Noisy Land Pixels")
+    set(gca,'FontSize',16)
+    exportgraphics(fig2,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\noisy_land_',num2str(i),'.png'))
+
     denoise_land(:,:,i) = single_denoise_land;
     noisy_land(:,:,i) = single_noisy_land;
-    % close all;
+    close all;
 end
 
 %% Original code (only for igram #1)
