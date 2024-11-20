@@ -330,6 +330,79 @@ xlabel("Bad Interferograms")
 ylabel("CNR Value")
 set(gca,'FontSize',16)
 
+%% Evaluate more image quality metrics
+
+% Implement BRISQUE
+brisque_scores = zeros(1,size(unw_phase,3));
+for i = 1:length(brisque_scores)
+    brisque_scores(i) = brisque(denoise_land(:,:,i));
+end
+
+figure;
+boxplot(brisque_scores)
+title("BRISQUE Scores", "No Model")
+xlabel("Interferograms")
+ylabel("BRISQUE Score")
+
+figure;
+plot(brisque_scores)
+title("BRISQUE Scores", "No Model")
+xlabel("Interferograms")
+ylabel("BRISQUE Score")
+
+%% Implement BRISQUE with a model of 4 images
+imds = imageDatastore("C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\BRISQUE Trainers");
+% opinion_scores = [90, 55, 95, 10, 10]; % produced some bad results
+opinion_scores = [10, 30, 2, 100, 100];
+% opinion_scores = [10+0, 30+50, 2+0, 100+100, 100+100]/2; % with Kam input
+brisque_model = fitbrisque(imds,opinion_scores);
+
+bs_model = zeros(1,size(unw_phase,3));
+for i = 1:length(bs_model)
+    bs_model(i) = brisque(denoise_land(:,:,i), brisque_model);
+end
+
+figure;
+boxplot(bs_model)
+title("BRISQUE Scores", "With Model")
+xlabel("Interferograms")
+ylabel("BRISQUE Score")
+
+figure;
+plot(bs_model)
+title("BRISQUE Scores", "With Model")
+xlabel("Interferograms")
+ylabel("BRISQUE Score")
+
+%% Implement PIQE model
+piqe_scores = zeros(1,size(unw_phase,3));
+for i = 1:length(piqe_scores)
+    piqe_scores(i) = piqe(denoise_land(:,:,i));
+end
+
+figure;
+boxplot(piqe_scores)
+title("PIQE Scores")
+xlabel("Interferograms")
+ylabel("PIQE Score")
+
+figure;
+plot(piqe_scores)
+title("PIQE Scores")
+xlabel("Interferograms")
+ylabel("PIQE Score")
+
+
+%% Plot images for BRISQUE model
+
+for i = [3 10 13 41 44]
+    fig = figure;
+    imshow((denoise_land(:,:,i)).');
+    title(strcat("Interferogram #", num2str(i)));
+    set(gca,'FontSize',16)
+    exportgraphics(fig,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\BRISQUE Trainers\brisque_model',num2str(i),'.png'))
+    close all;
+end
 
 %% Scrap Code area
 %
