@@ -1,7 +1,13 @@
-close all
+% close all
 %% Set Limits
 % tic
 img = unw_phase.*mask;
+img_min = min(min(min(img)));
+img = abs(img-img_min);
+img_max = max(max(max(img)));
+img_range = img_max-img_min;
+img_adjust = 255/img_max;
+img = img.*img_adjust;
 loopnumber = 5;
 plus_minus = 2;
 % length(img(1,1,:))
@@ -177,59 +183,21 @@ title("img")
 %     title("Boundaries")
 %     figure
 %     imshow(imgs)
-
-
-for x=1:length(img_noise(:,1,12))
-    for y=1:length(img_noise(1,:,12))
-        img_noise(x,y,12) = round(img_noise(x,y,12));
+%% Noise calc
+img_view = 30;
+img_changed = img(:,:,img_view).*noise(:,:,img_view);
+img_noiseless = img(:,:,img_view).*(1-noise(:,:,img_view));
+for x=1:length(img(:,1,img_view))
+    for y=1:length(img(1,:,img_view))
+        img_changed(x,y) = round(img_changed(x,y));
     end
 end
 for j=1:255
-    img_noise_values(j) = sum(sum(img_noise(:,:,12) == j));
+    img_noise_values(j) = sum(sum(img_changed == j));
+    img_noiseless_values(j) = sum(sum(img_noiseless == j));
 end
-
-%% Miranda - calculating CNR of values
-
-% Plot and save all interferograms, both the denoised image and the noise
-% in the image
-
-for i = 1:N
-    fig1 = figure;
-    imshow((unw_phase(:,:,i).*double(boundaries)./255).');
-    title(strcat("Filtering_Code.m Denoised Interferogram #",num2str(i)))
-    set(gca,'FontSize',16)
-    exportgraphics(fig1,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\Schuster\denoised_',num2str(i),'.png'))
-
-    fig2 = figure;
-    imshow((unw_phase(:,:,i).*noise(:,:,i)).');
-    title("Isolated Noisy Land Pixels", strcat("Interferogram #",num2str(i)))
-    set(gca,'FontSize',16)
-    exportgraphics(fig2,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\Schuster\noisy_land_',num2str(i),'.png'))
-    
-    close all
-end
-
-%%
-cnr = zeros(1,size(unw_phase,3));
-
-for i = 1:N
-    s_land = mean(nonzeros(unw_phase(:,:,i).*double(boundaries)),"all");
-    s_noise = mean(nonzeros(noise(:,:,i).*double(boundaries)),"all");
-
-    stdev_land = std(unw_phase(:,:,i).*double(boundaries),0,"all");
-    stdev_noise = std(noise(:,:,i).*double(boundaries),0,"all");
-    stdev = (1/2)*sqrt(var(unw_phase(:,:,i).*double(boundaries),0,"all")+var(noise(:,:,i).*double(boundaries),0,"all"));
-
-    cnr(i) = (s_land-s_noise)/stdev_noise;
-end
-
-disp(strcat("CNR of entire dataset is ", num2str(mean(cnr,"all"))))
-
-figure;
-boxplot(cnr)
-title("CNR of Filtering Code Interferograms")
-xlabel("Filtering Code Interferograms")
-ylabel("CNR Value")
-set(gca,'FontSize',16)
-
+hold on
+figure
+plot(img_noise_values)
+% plot(img_noiseless_values)
 
