@@ -143,32 +143,32 @@ for i = 1:N
     % ss = [ss; s];
     % shifts = [shifts; shift];
 
-    fig1 = figure;
-    axis on;
-    imshow(orig_denoise.');
-    title(strcat("Interferogram #", num2str(i), " After wdenoise2()"))
-    set(gca,'FontSize',16)
+    % fig1 = figure;
+    % axis on;
+    % imshow(orig_denoise.');
+    % title(strcat("Interferogram #", num2str(i), " After wdenoise2()"))
+    % set(gca,'FontSize',16)
 
     single_denoise_land = orig_denoise.*double(boundaries_logical);
 
-    figure;
-    imshow(single_denoise_land.');
-    title(strcat("Interferogram #", num2str(i), " Land Only After wdenoise2()"))
-    set(gca,'FontSize',16)
-    exportgraphics(fig1,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\denoised_',num2str(i),'.png'))
+    % fig1 = figure;
+    % imshow(single_denoise_land.');
+    % title(strcat("Interferogram #", num2str(i), " Land Only After wdenoise2()"))
+    % set(gca,'FontSize',16)
+    % exportgraphics(fig1,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\BRISQUE Trainers\brisque_model',num2str(i),'.png'))
 
     single_noisy_land = zeros(size(single_denoise_land,1),size(single_denoise_land,2));
     single_noisy_land((single_denoise_land < mean(single_denoise_land,"all")-(std(single_denoise_land,1,"all")/2)) & (boundaries_logical == 1)) = 1;
 
-    fig2 = figure;
-    imshow((single_noisy_land.*255).');
-    title("Isolated Noisy Land Pixels")
-    set(gca,'FontSize',16)
-    exportgraphics(fig2,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\noisy_land_',num2str(i),'.png'))
+    % fig2 = figure;
+    % imshow((single_noisy_land.*255).');
+    % title("Isolated Noisy Land Pixels")
+    % set(gca,'FontSize',16)
+    % exportgraphics(fig2,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\noisy_land_',num2str(i),'.png'))
 
     denoise_land(:,:,i) = single_denoise_land;
     noisy_land(:,:,i) = single_noisy_land;
-    close all;
+    % close all;
 end
 
 %% Original code (only for igram #1)
@@ -335,7 +335,13 @@ set(gca,'FontSize',16)
 % Implement BRISQUE
 brisque_scores = zeros(1,size(unw_phase,3));
 for i = 1:length(brisque_scores)
-    brisque_scores(i) = brisque(denoise_land(:,:,i));
+    denoise_mask = denoise_land(:,:,i) ~= 0;
+    img = unw_phase(:,:,i).*denoise_mask;
+    min_val = min(img(:));
+    max_val = max(img(:));
+    img_scaled = (img - min_val) / (max_val - min_val);
+
+    brisque_scores(i) = brisque(img_scaled);
 end
 
 figure;
@@ -350,15 +356,16 @@ title("BRISQUE Scores", "No Model")
 xlabel("Interferograms")
 ylabel("BRISQUE Score")
 
-%% Implement BRISQUE with a model of 4 images
+%% Implement BRISQUE with a model of 5 images
 imds = imageDatastore("C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\BRISQUE Trainers");
 % opinion_scores = [90, 55, 95, 10, 10]; % produced some bad results
-opinion_scores = [10, 30, 2, 100, 100];
-% opinion_scores = [10+0, 30+50, 2+0, 100+100, 100+100]/2; % with Kam input
+% opinion_scores = [10, 30, 2, 100, 100];
+% opinion_scores = [0 50 0 100 100]/4; % with Kam input
+opinion_scores = [0 50 0 30 100 100 100 0 100 0]/2; % with Kam input
 brisque_model = fitbrisque(imds,opinion_scores);
 
 bs_model = zeros(1,size(unw_phase,3));
-for i = 1:length(bs_model)
+for i = 1:N
     bs_model(i) = brisque(denoise_land(:,:,i), brisque_model);
 end
 
@@ -392,7 +399,6 @@ title("PIQE Scores")
 xlabel("Interferograms")
 ylabel("PIQE Score")
 
-
 %% Plot images for BRISQUE model
 
 for i = [3 10 13 41 44]
@@ -401,6 +407,63 @@ for i = [3 10 13 41 44]
     title(strcat("Interferogram #", num2str(i)));
     set(gca,'FontSize',16)
     exportgraphics(fig,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Denoised Land Images\BRISQUE Trainers\brisque_model',num2str(i),'.png'))
+    close all;
+end
+
+%% Plotting wrapped phase per Roger's recommendation
+
+% Import wrapped phase files
+subdir = 'sbas_24';
+addpath(strcat('C:\Users\mmpho\sent_test\',subdir))
+
+nr=1890; naz=1016;
+wr_phase=zeros(nr,naz,N);
+
+for i = 1:N
+    disp(i + "/" + N)
+    % wrapped phase
+    filename=sprintf('%s',cells{i});
+    fid=fopen(filename);
+    dat=fread(fid,[2*nr,inf],'float','ieee-le');
+    temp=dat(1:2:2*nr-1,:)+1i*dat(2:2:2*nr,:);
+    wr_phase(:,:,i)=temp;
+    fclose(fid);
+end
+
+%% Plot histogram of "noisy" and "non-noisy" land pixel phase values
+
+wrapped_noise = wr_phase.*noisy_land;
+denoise_land_log = double(denoise_land ~= 0);
+wrapped_land = wr_phase.*denoise_land_log;
+
+for i = 1:N
+    % "Noisy" phase values
+    fig1 = figure;
+    tiledlayout(2,1)
+    set(gcf, 'Position', get(0, 'Screensize'));
+
+    nexttile
+    histogram(angle(nonzeros(wrapped_noise(:,:,i))))
+    axis tight
+    title("Noisy Land Pixel Wrapped Phase Distribution", strcat("Interferogram #",num2str(i)))
+    xlabel("Wrapped Phase Values (radians)")
+    xlim([0 4e-8])
+    ylabel("Number of Pixels")
+    % set(gca,'FontSize',16)
+    % exportgraphics(fig1,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Wrapped Phase Distributions\noisy_pix_',num2str(i),'.png'))
+
+    % "Good" phase values
+    nexttile
+    % fig2 = figure;
+    % set(gcf, 'Position', get(0, 'Screensize'));
+    histogram(abs(nonzeros(wrapped_land(:,:,i))))
+    axis tight
+    title("Non-noisy Land Pixel Wrapped Phase Distribution", strcat("Interferogram #",num2str(i)))
+    xlabel("Wrapped Phase Values (radians)")
+    xlim([0 4e-8])
+    ylabel("Number of Pixels")
+    % set(gca,'FontSize',16)
+    exportgraphics(fig1,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Wrapped Phase Distributions\comparison',num2str(i),'.png'))
     close all;
 end
 

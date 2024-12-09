@@ -183,7 +183,7 @@ imAlpha(isnan(mask))=0;
 
 %looping through all interferograms
 % CAREFUL, time taken will depend on # of ints and processing power
-addpath('C:\Users\mmpho\OneDrive\Documents\radar-lab\sp24')
+addpath('C:\Users\mmpho\radar-lab\sp24')
 no_x_tix = 5;
 no_y_tix = 5;
 [pix, labels] = igram_latlong(subdir,no_x_tix,no_y_tix);
@@ -194,7 +194,7 @@ if (~isfolder('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year
     mkdir('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\IG Error Plots');
 end
 
-for i= 1:3 % [17 35 44]
+for i= 14 % [17 35 44]
     fig = figure('Name',strcat("Alpha value = ",num2str(alpha)));
     tiledlayout(2,2)
     nexttile
@@ -208,6 +208,7 @@ for i= 1:3 % [17 35 44]
     set(gca,'XTickLabel',labels(1,1:no_x_tix))
     set(gca,'YTick',pix(2,1:no_y_tix))      %~pixel values corresponding to lat.
     set(gca,'YTickLabel',labels(2,1:no_y_tix))
+    xlabel(colorbar, '[rads]')
     xlabel('Longitude (degrees)')
     ylabel('Latitude (degrees)')
     set(gca,'FontSize',16)
@@ -256,6 +257,7 @@ for i= 1:3 % [17 35 44]
     histogram((unw_phase(:,:,i).*mask).')
     title(['Unwrapped Phase Distribution #',num2str(i)],[date_pair{1,i},' - ', date_pair{2,i}])
     set(gcf, 'Position', get(0, 'Screensize')); %forcing  automatic full screen resolution
+    set(gca,'FontSize',16)
     %figure
 
     % Save file
