@@ -436,7 +436,7 @@ wrapped_noise = wr_phase.*noisy_land;
 denoise_land_log = double(denoise_land ~= 0);
 wrapped_land = wr_phase.*denoise_land_log;
 
-for i = 1:N
+for i = 14
     % "Noisy" phase values
     fig1 = figure;
     tiledlayout(2,1)
@@ -447,7 +447,6 @@ for i = 1:N
     axis tight
     title("Noisy Land Pixel Wrapped Phase Distribution", strcat("Interferogram #",num2str(i)))
     xlabel("Wrapped Phase Values (radians)")
-    xlim([0 4e-8])
     ylabel("Number of Pixels")
     % set(gca,'FontSize',16)
     % exportgraphics(fig1,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Wrapped Phase Distributions\noisy_pix_',num2str(i),'.png'))
@@ -456,11 +455,10 @@ for i = 1:N
     nexttile
     % fig2 = figure;
     % set(gcf, 'Position', get(0, 'Screensize'));
-    histogram(abs(nonzeros(wrapped_land(:,:,i))))
+    histogram(angle(nonzeros(wrapped_land(:,:,i))))
     axis tight
     title("Non-noisy Land Pixel Wrapped Phase Distribution", strcat("Interferogram #",num2str(i)))
     xlabel("Wrapped Phase Values (radians)")
-    xlim([0 4e-8])
     ylabel("Number of Pixels")
     % set(gca,'FontSize',16)
     exportgraphics(fig1,strcat('C:\Users\mmpho\OneDrive - Washington University in St. Louis\Year 4\Capstone\Wrapped Phase Distributions\comparison',num2str(i),'.png'))
